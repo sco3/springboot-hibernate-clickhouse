@@ -1,0 +1,21 @@
+meta {
+  name: Stats
+  type: http
+  seq: 7
+}
+
+get {
+  url: http://localhost:8080/api/stats
+  body: none
+  auth: none
+}
+
+tests {
+  test("status is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  test("total positive and INFO present", function() {
+    expect(res.body.total).to.be.above(0);
+    expect(res.body.bySeverity).to.have.property("INFO");
+  });
+}

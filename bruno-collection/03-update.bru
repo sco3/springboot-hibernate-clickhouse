@@ -1,0 +1,26 @@
+meta {
+  name: Update Event
+  type: http
+  seq: 3
+}
+
+put {
+  url: http://localhost:8080/api/events/{{eventId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "message": "message rewritten by mutation"
+  }
+}
+
+tests {
+  test("status is 200", function() {
+    expect(res.status).to.equal(200);
+  });
+  test("message updated", function() {
+    expect(res.body.message).to.equal("message rewritten by mutation");
+  });
+}
