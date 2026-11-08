@@ -1,0 +1,79 @@
+name: API Integration Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Start ClickHouse
+        run: docker compose up -d
+
+      - name: Wait for ClickHouse
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:8123/ping | grep -q "Ok"; then
+              echo "ClickHouse is ready"
+              exit 0
+            fi
+            echo "Waiting for ClickHouse... ($i/30)"
+            sleep 2
+          done
+          echo "ClickHouse did not start in time"
+          exit 1
+
+      - name: Start Spring Boot in background
+        run: |
+          nohup ./gradlew bootRun > bootrun.log 2>&1 &
+          echo "BootRun started in background"
+
+      - name: Wait for Spring Boot
+        run: |
+          for i in {1..60}; do
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/events?limit=1 | grep -q "200"; then
+              echo "Spring Boot is ready"
+              exit 0
+            fi
+            echo "Waiting for Spring Boot... ($i/60)"
+            sleep 2
+          done
+          echo "Spring Boot did not start in time"
+          tail -100 bootrun.log
+          exit 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Bruno CLI
+        run: npm install -g @usebruno/cli
+
+      - name: Run Bruno tests with HTML report
+        run: |
+          mkdir -p reports
+          cd bruno-collection
+          bru run --reporter-html ../reports/bruno-results.html
+
+      - name: Upload Bruno HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bruno-test-report
+          path: reports/bruno-results.html
+          if-no-files-found: error
