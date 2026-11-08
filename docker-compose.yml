@@ -3,7 +3,7 @@ services:
     image: clickhouse/clickhouse-server:26.8.36.3
     container_name: clickhouse-demo
     ports:
-      - "8123:8123" # HTTP interface used by the JDBC driver
+      - 8123:8123 # HTTP interface used by the JDBC driver
     environment:
       CLICKHOUSE_DB: appdb
       CLICKHOUSE_USER: app
@@ -11,7 +11,11 @@ services:
     volumes:
       - clickhouse-data:/var/lib/clickhouse
     healthcheck:
-      test: ["CMD-SHELL", "clickhouse client --user app --password app123 --query 'SELECT 1'"]
+      test:
+        [
+          CMD-SHELL,
+          clickhouse client --user app --password app123 --query 'SELECT 1',
+        ]
       interval: 3s
       timeout: 5s
       retries: 30

@@ -4,13 +4,13 @@ A small REST service that stores events in [ClickHouse](https://clickhouse.com) 
 Hibernate / Spring Data JPA. It demonstrates how to run JPA on a column-oriented OLAP
 database, and where ClickHouse deliberately deviates from a classic RDBMS.
 
-| Layer     | Choice                                                        |
-|-----------|---------------------------------------------------------------|
-| Language  | Java 25 LTS                                                   |
-| Build     | Gradle 9.6.1 (wrapper included, no local Gradle needed)       |
-| Framework | Spring Boot 4.1.2 (`starter-web`, `starter-data-jpa`)          |
-| ORM       | Hibernate ORM 7.4.13 + custom `ClickHouseDialect`             |
-| Database  | ClickHouse 26.8.36.3 (Docker Compose), JDBC driver 0.11.0     |
+| Layer     | Choice                                                    |
+| --------- | --------------------------------------------------------- |
+| Language  | Java 25 LTS                                               |
+| Build     | Gradle 9.6.1 (wrapper included, no local Gradle needed)   |
+| Framework | Spring Boot 4.1.2 (`starter-web`, `starter-data-jpa`)     |
+| ORM       | Hibernate ORM 7.4.13 + custom `ClickHouseDialect`         |
+| Database  | ClickHouse 26.8.36.3 (Docker Compose), JDBC driver 0.11.0 |
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ database, and where ClickHouse deliberately deviates from a classic RDBMS.
 - Internet access on first run (Gradle wrapper downloads the Gradle 9.6.1
   distribution and pulls dependencies from Maven Central)
 
-That's it — you do *not* need a locally installed Gradle; `./gradlew` bootstraps it.
+That's it — you do _not_ need a locally installed Gradle; `./gradlew` bootstraps it.
 
 ## Build
 
@@ -104,14 +104,14 @@ docker compose up -d   # integration tests need the database
 
 ## API
 
-| Method   | Path                     | Description                                        |
-|----------|--------------------------|----------------------------------------------------|
-| `POST`   | `/api/events`            | Create an event (`source`, `severity`, `message`)  |
-| `GET`    | `/api/events?limit=50`   | Recent events, newest first                        |
-| `GET`    | `/api/events/{id}`       | Single event (`404` if unknown)                    |
-| `PUT`    | `/api/events/{id}`       | Rewrite the message (ClickHouse mutation)          |
-| `DELETE` | `/api/events/{id}`       | Delete (ClickHouse lightweight delete)             |
-| `GET`    | `/api/stats`             | Totals, per-severity counts, hourly buckets (24 h) |
+| Method   | Path                   | Description                                        |
+| -------- | ---------------------- | -------------------------------------------------- |
+| `POST`   | `/api/events`          | Create an event (`source`, `severity`, `message`)  |
+| `GET`    | `/api/events?limit=50` | Recent events, newest first                        |
+| `GET`    | `/api/events/{id}`     | Single event (`404` if unknown)                    |
+| `PUT`    | `/api/events/{id}`     | Rewrite the message (ClickHouse mutation)          |
+| `DELETE` | `/api/events/{id}`     | Delete (ClickHouse lightweight delete)             |
+| `GET`    | `/api/stats`           | Totals, per-severity counts, hourly buckets (24 h) |
 
 ```bash
 curl -X POST localhost:8080/api/events \
@@ -130,19 +130,19 @@ docker exec -it clickhouse-demo clickhouse client --user app --password app123 -
 
 ## Troubleshooting
 
-| Symptom | Cause / fix |
-|---|---|
-| App exits at startup with a connection exception | ClickHouse isn't up yet — `docker compose ps` must show `healthy`, then restart the app |
+| Symptom                                                 | Cause / fix                                                                                               |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| App exits at startup with a connection exception        | ClickHouse isn't up yet — `docker compose ps` must show `healthy`, then restart the app                   |
 | `Port 8123 already in use` / `Port 8080 already in use` | Another container/service holds the port; change the mapping in `docker-compose.yml` or set `server.port` |
-| "No matching toolchain" during build | Gradle can't find a JDK 25; install one or point `org.gradle.java.home` at it |
-| Fresh `docker compose down -v` → app keeps old data? | It doesn't: the seeder only fills an empty table, a wiped volume starts clean |
+| "No matching toolchain" during build                    | Gradle can't find a JDK 25; install one or point `org.gradle.java.home` at it                             |
+| Fresh `docker compose down -v` → app keeps old data?    | It doesn't: the seeder only fills an empty table, a wiped volume starts clean                             |
 
 ## How JPA and ClickHouse fit together
 
 ClickHouse is not a JDBC/JPA-native database, so the project documents every deviation
 in code. The interesting bits:
 
-**Custom dialect** — Hibernate (core *and* `hibernate-community-dialects`) ships no
+**Custom dialect** — Hibernate (core _and_ `hibernate-community-dialects`) ships no
 ClickHouse dialect, so [`ClickHouseDialect`](src/main/java/com/example/clickhouse/dialect/ClickHouseDialect.java)
 maps JDBC type codes to ClickHouse types (`String`, `Int64`, `DateTime64(6, 'UTC')`, `UUID`, ...).
 
@@ -173,7 +173,7 @@ immediately; the physical merge happens in the background.
 
 ## Project layout
 
-```
+```text
 docker-compose.yml                         ClickHouse 26.8, port 8123, user app/app123
 build.gradle.kts / settings.gradle.kts     Gradle 9.6.1 build (Kotlin DSL)
 src/main/resources/application.yml          datasource, JPA/Hibernate settings
@@ -185,4 +185,12 @@ src/main/.../service/EventService          API-facing service
 src/main/.../web/                          REST controllers, DTOs, error handling
 src/main/.../bootstrap/DemoDataSeeder      seeds ~200 events on first start
 src/test/                                  unit + integration tests
+```
+
+## Bruno tests
+
+Install:
+
+```sh
+npm install -g @usebruno/cli
 ```
