@@ -45,3 +45,8 @@ test-api:
 
     # aggregates stats
     curl -i http://localhost:8080/api/stats
+    
+# run bruno tests
+test-bruno:
+    cd bruno-collection && bru run --reporter-html ../results.html
+    

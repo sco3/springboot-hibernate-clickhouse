@@ -10,3 +10,5 @@ bin/
 .settings
 .project
 .classpath
+results.html
+bruno-collection/results.html
