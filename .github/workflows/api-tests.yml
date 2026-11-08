@@ -61,19 +61,79 @@ jobs:
         with:
           node-version: "20"
 
+name: API Tests & Deploy Report
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Start ClickHouse
+        run: docker compose up -d
+
+      - name: Wait for ClickHouse
+        run: |
+          for i in {1..30}; do
+            curl -s http://localhost:8123/ping | grep -q "Ok" && exit 0
+            sleep 2
+          done
+          exit 1
+
+      - name: Start Spring Boot
+        run: nohup ./gradlew bootRun > bootrun.log 2>&1 &
+
+      - name: Wait for Spring Boot
+        run: |
+          for i in {1..60}; do
+            curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/events?limit=1 | grep -q "200" && exit 0
+            sleep 2
+          done
+          tail -100 bootrun.log
+          exit 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - name: Install Bruno CLI
         run: npm install -g @usebruno/cli
 
-      - name: Run Bruno tests with HTML report
+      - name: Run Bruno with HTML report
         run: |
-          mkdir -p reports
+          mkdir -p _site
           cd bruno-collection
-          bru run --reporter-html ../reports/bruno-results.html
+          bru run --reporter-html ../_site/index.html
 
-      - name: Upload Bruno HTML report
-        if: always()
-        uses: actions/upload-artifact@v4
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
         with:
-          name: bruno-test-report
-          path: reports/bruno-results.html
-          if-no-files-found: error
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
