@@ -10,6 +10,10 @@ on:
 jobs:
   api-tests:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
 
     steps:
       - name: Checkout code
@@ -64,16 +68,18 @@ jobs:
       - name: Install Bruno CLI
         run: npm install -g @usebruno/cli
 
-      - name: Run Bruno tests with HTML report
+      - name: Run Bruno with HTML report
         run: |
-          mkdir -p reports
+          mkdir -p _site
           cd bruno-collection
-          bru run --reporter-html ../reports/bruno-results.html
+          bru run --reporter-html ../_site/index.html
 
-      - name: Upload Bruno HTML report
-        if: always()
-        uses: actions/upload-artifact@v4
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
         with:
-          name: bruno-test-report
-          path: reports/bruno-results.html
-          if-no-files-found: error
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
