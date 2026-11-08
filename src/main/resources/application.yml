@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: clickhouse-hibernate-demo
+
+  datasource:
+    # The ClickHouse JDBC driver talks to the HTTP interface (port 8123).
+    # ClickHouse has no transactions, so the driver is told to tolerate (i.e. no-op)
+    # the setAutoCommit(false)/commit()/rollback() calls that Spring's transaction
+    # manager and Hibernate will make.
+    url: jdbc:clickhouse://localhost:8123/appdb?jdbc_ignore_unsupported_values=true
+    driver-class-name: com.clickhouse.jdbc.ClickHouseDriver
+    username: app
+    password: app123
+
+  # The table needs ENGINE = MergeTree / ORDER BY clauses Hibernate cannot emit,
+  # so DDL lives in schema.sql and Hibernate must not try to manage the schema.
+  sql:
+    init:
+      mode: always
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        # No ClickHouse dialect ships with Hibernate -> our own (org.hibernate.community.dialect has none either)
+        dialect: sco3.dialect.ClickHouseDialect
+        # Hibernate 7's default UUID mapping binds 16 raw bytes, which the ClickHouse
+        # driver cannot serialize; the string form maps cleanly onto the UUID column.
+        type.preferred_uuid_jdbc_type: VARCHAR
+        format_sql: true
+
+server:
+  port: 8080
+
+logging:
+  level:
+    org.hibernate.SQL: info
