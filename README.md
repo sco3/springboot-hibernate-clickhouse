@@ -194,3 +194,5 @@ Install:
 ```sh
 npm install -g @usebruno/cli
 ```
+
+The github action tests results: https://sco3.github.io/springboot-hibernate-clickhouse/
